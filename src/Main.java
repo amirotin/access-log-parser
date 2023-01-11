@@ -1,34 +1,38 @@
-import java.io.File;
-import java.util.Scanner;
+import java.io.*;
 
 public class Main {
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        int count = 0;
+        String fileName = "access.log";
+        if (args.length == 1) {
+            fileName = args[0];
+        }
+        int numberOfLines = 0;
+        int maxLineLength = 0;
+        int minLineLength = Integer.MAX_VALUE;
 
-        while (true) {
-            System.out.println("Укажите путь до файла: ");
-            String path = scanner.nextLine();
+        File logFile = new File(fileName);
 
-            if (path.equals("exit")) {
-                break;
+        try (FileReader fileReader = new FileReader(logFile)) {
+            BufferedReader reader = new BufferedReader(fileReader);
+            String line;
+            while ((line = reader.readLine()) != null) {
+                numberOfLines++;
+                int lineLength = line.length();
+                if (lineLength > 1024) {
+                    throw new TooLongException(String.format("Длина строки %d превышает 1024 символа", numberOfLines));
+                }
+                if (lineLength > maxLineLength) {
+                    maxLineLength = line.length();
+                }
+                if (lineLength < minLineLength) {
+                    minLineLength = line.length();
+                }
             }
-
-            File file = new File(path);
-            boolean fileExists = file.exists();
-            boolean isDirectory = file.isDirectory();
-
-            if (!fileExists) {
-                System.out.println("Файл не существует");
-                continue;
-            }
-            if (isDirectory) {
-                System.out.println("Это директория");
-                continue;
-            }
-
-            count++;
-            System.out.println("Путь указан верно, файл существует. Файл номер " + count);
+            System.out.println("Количество строк: " + numberOfLines);
+            System.out.println("Максимальная длина строки: " + maxLineLength);
+            System.out.println("Минимальная длина строки: " + minLineLength);
+        } catch (IOException | TooLongException e) {
+            e.printStackTrace();
         }
     }
 }
